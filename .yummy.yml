@@ -1,3 +1,6 @@
+---
 yum:
   repopath: /opt/
-  createrepo: /bin/createrepo
+  workers: 2
+  createrepoBinary: /bin/createrepo
+  rpmBinary: /bin/rpm
