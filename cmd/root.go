@@ -23,11 +23,11 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"path/filepath"
 )
 
 var cfgFile string
@@ -84,9 +84,9 @@ func initConfig() {
 		exPath := filepath.Dir(ex)
 
 		// Substract the name of the executable and the last slash
-		viper.AddConfigPath(exPath[:len(exPath)-6])
+		viper.AddConfigPath(exPath)
 
-		// 
+		// Search for config file with name ".yummy" (without extension).
 		viper.SetConfigName(".yummy")
 	}
 
