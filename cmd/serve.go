@@ -22,34 +22,56 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/spf13/cobra"
+)
+
+var (
+	port string
 )
 
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "start the yummy webserver",
+	Short: "Starts the yummy webserver",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("serve called")
-		log.Println("serve called")
 
 		http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir("/tmp"))))
+		http.HandleFunc("/api/upload", apiuploadhandler)
+
+		log.Fatal(http.ListenAndServe(":8080", nil))
 	},
+}
+
+func apiuploadhandler(w http.ResponseWriter, r *http.Request) {
+	// will handle file uploads
+	fmt.Println(r.Method)
+
+	if r.Method == "POST" {
+		file, handler, err := r.FormFile("fileupload")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer file.Close()
+
+		// copy example
+		f, err := os.OpenFile("/tmp/"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+		io.Copy(f, file)
+	}
 }
 
 func init() {
 	RootCmd.AddCommand(serveCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// serveCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// serveCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// Flags for the serve command.
+	serveCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port to listen on")
 }
