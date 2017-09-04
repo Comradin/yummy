@@ -31,7 +31,8 @@ import (
 )
 
 var (
-	port string
+	port  string
+	debug bool
 )
 
 // serveCmd represents the serve command
@@ -50,7 +51,10 @@ var serveCmd = &cobra.Command{
 
 func apiuploadhandler(w http.ResponseWriter, r *http.Request) {
 	// will handle file uploads
-	fmt.Println(r.Method)
+	if debug {
+		fmt.Println(r.Method)
+		fmt.Println(r.Header)
+	}
 
 	if r.Method == "POST" {
 		file, handler, err := r.FormFile("fileupload")
@@ -67,6 +71,13 @@ func apiuploadhandler(w http.ResponseWriter, r *http.Request) {
 		defer f.Close()
 		io.Copy(f, file)
 	}
+
+	// assume curl --upload-file style of upload
+	if r.Method == "PUT" {
+		fmt.Println("There came curl ..")
+		fmt.Println(r.URL)
+		// f, err := os.OpenFile("/tmp/"+h)
+	}
 }
 
 func init() {
@@ -74,4 +85,5 @@ func init() {
 
 	// Flags for the serve command.
 	serveCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port to listen on")
+	serveCmd.Flags().BoolVarP(&debug, "debug", "d", false, "Enable debug output")
 }
