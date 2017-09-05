@@ -52,19 +52,20 @@ var serveCmd = &cobra.Command{
 func apiuploadhandler(w http.ResponseWriter, r *http.Request) {
 	// will handle file uploads
 	if debug {
-		fmt.Println(r.Method)
-		fmt.Println(r.Header)
+		fmt.Println("Method:", r.Method)
+		fmt.Println("Header:", r.Header)
 	}
 
 	if r.Method == "POST" {
 		file, handler, err := r.FormFile("fileupload")
 		if err != nil {
-			log.Fatal(err)
+			http.Error(w, "FormFile does not match - use fileupload\n", http.StatusBadRequest)
+			return
 		}
 		defer file.Close()
 
-		// copy example
-		f, err := os.OpenFile("/tmp/"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0644)
+		// create file handler to write uploaded file to
+		f, err := os.OpenFile("/opt/repos/"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -72,11 +73,10 @@ func apiuploadhandler(w http.ResponseWriter, r *http.Request) {
 		io.Copy(f, file)
 	}
 
-	// assume curl --upload-file style of upload
+	// assume curl --upload-file style of upload type
+	// this is currently not supported
 	if r.Method == "PUT" {
-		fmt.Println("There came curl ..")
-		fmt.Println(r.URL)
-		// f, err := os.OpenFile("/tmp/"+h)
+		http.Error(w, "Method not allowed, POST binary to URI\n", http.StatusMethodNotAllowed)
 	}
 }
 
