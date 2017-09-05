@@ -26,14 +26,17 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"path/filepath"
+	"github.com/spf13/viper"
 )
 
 var (
-	port  string
-	debug bool
+	port   string
+	debug  bool
+	cmdOut []byte
 )
 
 // serveCmd represents the serve command
@@ -51,12 +54,18 @@ var serveCmd = &cobra.Command{
 }
 
 func apiuploadhandler(w http.ResponseWriter, r *http.Request) {
-	// will handle file uploads
+
+	repoPath := viper.GetString("yum.repopath")
+	workers := viper.GetString("yum.workers")
+	createrepoBinary := viper.GetString("yum.createrepoBinary")
+
 	if debug {
 		fmt.Println("Method:", r.Method)
 		fmt.Println("Header:", r.Header)
+		fmt.Println("repoPath:", repoPath)
 	}
 
+	// will handle file uploads
 	if r.Method == "POST" {
 		file, handler, err := r.FormFile("fileupload")
 		if err != nil {
@@ -71,12 +80,32 @@ func apiuploadhandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// create file handler to write uploaded file to
-		f, err := os.OpenFile("/opt/repos/"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0644)
+		f, err := os.OpenFile(repoPath+"/"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0644)
 		if err != nil {
+			http.Error(w, "An error occurred", http.StatusInternalServerError)
 			log.Fatal(err)
 		}
 		defer f.Close()
-		io.Copy(f, file)
+
+		// copy the file buffer into the file handle
+		_, err = io.Copy(f, file)
+		if err != nil {
+			http.Error(w, "An error occurred applying the upload to the filesystem", http.StatusInternalServerError)
+			log.Println(err)
+			return
+		}
+
+		// process the uploaded file
+		cmdOut, err = exec.Command(createrepoBinary, "-v", "-p", "--update", "--workers", workers, repoPath).Output()
+		if err != nil {
+			http.Error(w, "Could not update repository", http.StatusInternalServerError)
+			log.Println(err)
+			return
+		}
+
+		if debug {
+			log.Println(string(cmdOut))
+		}
 	}
 
 	// assume curl --upload-file style of upload type
