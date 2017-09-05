@@ -28,6 +28,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"path/filepath"
 )
 
 var (
@@ -63,6 +64,11 @@ func apiuploadhandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer file.Close()
+
+		if filepath.Ext(handler.Filename) != ".rpm" {
+			http.Error(w, "File not RPM\n", http.StatusUnsupportedMediaType)
+			return
+		}
 
 		// create file handler to write uploaded file to
 		f, err := os.OpenFile("/opt/repos/"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0644)
