@@ -44,9 +44,9 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Starts the yummy webserver",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("serve called")
 
-		http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir("/tmp"))))
+		repoPath := viper.GetString("yum.repopath")
+		http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir(repoPath))))
 		http.HandleFunc("/api/upload", apiuploadhandler)
 
 		log.Fatal(http.ListenAndServe(":8080", nil))
