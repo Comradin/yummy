@@ -13,4 +13,4 @@ ADD yummy /bin
 
 EXPOSE 8080
 
-CMD ["./yummy", "serve"]
+CMD ["yummy", "serve"]
