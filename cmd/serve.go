@@ -23,6 +23,7 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -31,6 +32,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"gopkg.in/russross/blackfriday.v2"
 )
 
 var (
@@ -47,10 +49,28 @@ var serveCmd = &cobra.Command{
 
 		repoPath := viper.GetString("yum.repopath")
 		http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir(repoPath))))
+		http.HandleFunc("/help", helpHandler)
 		http.HandleFunc("/api/upload", apiuploadhandler)
 
 		log.Fatal(http.ListenAndServe(":8080", nil))
 	},
+}
+
+func helpHandler(w http.ResponseWriter, r *http.Request) {
+	// get helpFile path from configuration
+	helpFile := viper.GetString("yum.helpFile")
+
+	// ingest the configured helpFile
+	help, err := ioutil.ReadFile(helpFile)
+	if err != nil {
+		http.Error(w, "Could not load the help file", http.StatusInternalServerError)
+		return
+	}
+
+	// render the Markdown file to HTML using the
+	// blackfriday library
+	output := blackfriday.Run(help)
+	fmt.Fprintf(w, string(output))
 }
 
 func apiuploadhandler(w http.ResponseWriter, r *http.Request) {

@@ -4,3 +4,4 @@ yum:
   workers: 2
   createrepoBinary: /bin/createrepo
   rpmBinary: /bin/rpm
+  helpFile: /usr/share/doc/yummy/README.md
