@@ -1,3 +1,5 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/Comradin/yummy)](https://goreportcard.com/report/github.com/Comradin/yummy) [![Build Status](https://travis-ci.org/Comradin/yummy.svg?branch=master)](https://travis-ci.org/Comradin/yummy)
+
 # yummy
 A simple YUM repository server to upload to and serve rpm packages from.
 
@@ -18,7 +20,7 @@ _-F fileupload=@file.rpm_
 ```
 
 **Caution**: This is the **only** supported way of uploading files to the
-service at the moment. Using a different form value or an http PUT will 
+service at the moment. Using a different form value or an http PUT will
 result in an error.
 
 The file must be of type "*.rpm" or the upload will fail.
