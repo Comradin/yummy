@@ -83,7 +83,7 @@ func initConfig() {
 		}
 		exPath := filepath.Dir(ex)
 
-		// Substract the name of the executable and the last slash
+		// Subtract the name of the executable and the last slash
 		viper.AddConfigPath(exPath)
 
 		// Search for config file with name ".yummy" (without extension).
