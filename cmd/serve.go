@@ -33,12 +33,14 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/russross/blackfriday.v2"
+	"sync"
 )
 
 var (
 	port   string
 	debug  bool
 	cmdOut []byte
+	mutex  sync.Mutex
 )
 
 // serveCmd represents the serve command
@@ -116,12 +118,15 @@ func apiuploadhandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// process the uploaded file
+		mutex.Lock()
 		cmdOut, err = exec.Command(createrepoBinary, "-v", "-p", "--update", "--workers", workers, repoPath).Output()
 		if err != nil {
 			http.Error(w, "Could not update repository", http.StatusInternalServerError)
 			log.Println(err)
+			mutex.Unlock()
 			return
 		}
+		mutex.Unlock()
 
 		if debug {
 			log.Println(string(cmdOut))
