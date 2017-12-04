@@ -29,11 +29,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/russross/blackfriday.v2"
-	"sync"
 )
 
 var (
@@ -119,18 +119,17 @@ func apiuploadhandler(w http.ResponseWriter, r *http.Request) {
 
 		// process the uploaded file
 		mutex.Lock()
-		cmdOut, err = exec.Command(createrepoBinary, "-v", "-p", "--update", "--workers", workers, repoPath).Output()
+		cmdOut, err = exec.Command(createrepoBinary, "--update", "--workers", workers, repoPath).CombinedOutput()
 		if err != nil {
+			fmt.Fprintln(w, string(cmdOut))
 			http.Error(w, "Could not update repository", http.StatusInternalServerError)
-			log.Println(err)
+			log.Println(cmdOut, err)
 			mutex.Unlock()
 			return
 		}
+		log.Println(string(cmdOut))
 		mutex.Unlock()
 
-		if debug {
-			log.Println(string(cmdOut))
-		}
 	}
 
 	// assume curl --upload-file style of upload type
