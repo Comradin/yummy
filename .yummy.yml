@@ -1,6 +1,6 @@
 ---
 yum:
-  protected: true
+  protected: false
   repopath: /opt/
   workers: 2
   createrepoBinary: /bin/createrepo
