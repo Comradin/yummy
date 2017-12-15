@@ -18,3 +18,7 @@
 
 # Project binary
 yummy
+
+# Vendoring with dep
+# Ignore the vendored packages
+vendor/
