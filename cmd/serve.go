@@ -29,11 +29,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/russross/blackfriday.v2"
-	"sync"
 )
 
 var (
@@ -102,13 +102,15 @@ func apiuploadhandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// check if the uploaded file already exists
-		if _, err := os.Stat(repoPath+"/"+handler.Filename); err == nil {
+		// if the repository is configured in protected mode the upload will fail
+		if _, err := os.Stat(repoPath + "/" + handler.Filename); err == nil {
 			if viper.GetBool("yum.protected") {
 				http.Error(w, "Repository is protected, file already exists\n",
 					http.StatusConflict)
 				log.Println(err)
 				return
 			}
+			log.Println("File already exists, will overwrite: " + handler.Filename)
 		}
 
 		// create file handler to write uploaded file to
