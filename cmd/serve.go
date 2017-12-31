@@ -102,11 +102,12 @@ func apiuploadhandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// check if the uploaded file already exists
-		// if the repository is configured in protected mode the upload will fail
+		// if the repository is configured in protected mode
+		// the request will return status 403 (forbidden)
 		if _, err := os.Stat(repoPath + "/" + handler.Filename); err == nil {
 			if viper.GetBool("yum.protected") {
-				http.Error(w, "Repository is protected, file already exists\n",
-					http.StatusConflict)
+				http.Error(w, "File already exists, forbidden to overwrite!\n",
+					http.StatusForbidden)
 				log.Println(err)
 				return
 			}
