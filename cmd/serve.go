@@ -52,7 +52,7 @@ var serveCmd = &cobra.Command{
 		repoPath := viper.GetString("yum.repopath")
 		http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir(repoPath))))
 		http.HandleFunc("/help", helpHandler)
-		http.HandleFunc("/api/upload", apiuploadhandler)
+		http.HandleFunc("/api/upload", apiUploadHandler)
 
 		log.Fatal(http.ListenAndServe(":8080", nil))
 	},
@@ -75,7 +75,7 @@ func helpHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, string(output))
 }
 
-func apiuploadhandler(w http.ResponseWriter, r *http.Request) {
+func apiUploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	repoPath := viper.GetString("yum.repopath")
 	workers := viper.GetString("yum.workers")
