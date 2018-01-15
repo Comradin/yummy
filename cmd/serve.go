@@ -33,6 +33,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/julienschmidt/httprouter"
 	"gopkg.in/russross/blackfriday.v2"
 )
 
@@ -50,15 +51,20 @@ var serveCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		repoPath := viper.GetString("yum.repopath")
-		http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir(repoPath))))
-		http.HandleFunc("/help", helpHandler)
-		http.HandleFunc("/api/upload", apiUploadHandler)
+		router:= httprouter.New()
 
-		log.Fatal(http.ListenAndServe(":8080", nil))
+		http.Handle("/", http.FileServer(http.Dir(repoPath)))
+//		router.GET("/", http.StripPrefix("/", http.FileServer(http.Dir(repoPath))))
+		router.GET("/help", helpHandler)
+		router.POST("/api/upload", apiUploadHandler)
+		//router.PUT("/api/upload/:filename", apiUploadPut)
+		//router.DELETE("/api/delete/:name", apiDeleteHandler)
+
+		log.Fatal(http.ListenAndServe(":8080", router))
 	},
 }
 
-func helpHandler(w http.ResponseWriter, r *http.Request) {
+func helpHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// get helpFile path from configuration
 	helpFile := viper.GetString("yum.helpFile")
 
@@ -75,7 +81,7 @@ func helpHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, string(output))
 }
 
-func apiUploadHandler(w http.ResponseWriter, r *http.Request) {
+func apiUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	repoPath := viper.GetString("yum.repopath")
 	workers := viper.GetString("yum.workers")
