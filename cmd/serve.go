@@ -39,7 +39,6 @@ import (
 
 var (
 	port   string
-	debug  bool
 	cmdOut []byte
 	mutex  sync.Mutex
 )
@@ -89,12 +88,6 @@ func apiPostUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.P
 	repoPath := viper.GetString("yum.repopath")
 	workers := viper.GetString("yum.workers")
 	createrepoBinary := viper.GetString("yum.createrepoBinary")
-
-	if debug {
-		fmt.Println("Method:", r.Method)
-		fmt.Println("Header:", r.Header)
-		fmt.Println("repoPath:", repoPath)
-	}
 
 	file, handler, err := r.FormFile("fileupload")
 	if err != nil {
@@ -166,5 +159,4 @@ func init() {
 
 	// Flags for the serve command.
 	serveCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port to listen on")
-	serveCmd.Flags().BoolVarP(&debug, "debug", "d", false, "Enable debug output")
 }
