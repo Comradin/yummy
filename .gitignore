@@ -22,3 +22,6 @@ yummy
 # Vendoring with dep
 # Ignore the vendored packages
 vendor/
+
+# Ignore testfiles
+test/
