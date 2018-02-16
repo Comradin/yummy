@@ -31,9 +31,9 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/julienschmidt/httprouter"
 	"gopkg.in/russross/blackfriday.v2"
 )
 
@@ -52,11 +52,11 @@ var serveCmd = &cobra.Command{
 
 		repoPath := viper.GetString("yum.repopath")
 
-		router:= httprouter.New()
+		router := httprouter.New()
 		router.Handler("GET", "/", http.FileServer(http.Dir(repoPath)))
 
 		router.GET("/help", helpHandler)
-		router.POST("/api/upload", apiUploadHandler)
+		router.POST("/api/upload", apiPostUploadHandler)
 		//router.PUT("/api/upload/:filename", apiUploadPut)
 		//router.DELETE("/api/delete/:name", apiDeleteHandler)
 
@@ -81,7 +81,7 @@ func helpHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Fprintf(w, string(output))
 }
 
-func apiUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func apiPostUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	repoPath := viper.GetString("yum.repopath")
 	workers := viper.GetString("yum.workers")
@@ -93,69 +93,59 @@ func apiUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Param
 		fmt.Println("repoPath:", repoPath)
 	}
 
-	// will handle file uploads
-	if r.Method == "POST" {
-		file, handler, err := r.FormFile("fileupload")
-		if err != nil {
-			http.Error(w, "FormFile does not match - use fileupload\n", http.StatusBadRequest)
-			return
-		}
-		defer file.Close()
+	file, handler, err := r.FormFile("fileupload")
+	if err != nil {
+		http.Error(w, "FormFile does not match - use fileupload\n", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
 
-		if filepath.Ext(handler.Filename) != ".rpm" {
-			http.Error(w, "File not RPM\n", http.StatusUnsupportedMediaType)
-			return
-		}
+	if filepath.Ext(handler.Filename) != ".rpm" {
+		http.Error(w, "File not RPM\n", http.StatusUnsupportedMediaType)
+		return
+	}
 
-		// check if the uploaded file already exists
-		// if the repository is configured in protected mode
-		// the request will return status 403 (forbidden)
-		if viper.GetBool("yum.protected") {
-			if _, err := os.Stat(repoPath + "/" + handler.Filename); err == nil {
-				http.Error(w, "File already exists, forbidden to overwrite!\n",
-					http.StatusForbidden)
-				log.Println(err)
-				return
-			}
-			log.Println("File already exists, will overwrite: " + handler.Filename)
-		}
-
-		// create file handler to write uploaded file to
-		f, err := os.OpenFile(repoPath+"/"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0644)
-		if err != nil {
-			http.Error(w, "An error occurred", http.StatusInternalServerError)
-			log.Fatal(err)
-		}
-		defer f.Close()
-
-		// copy the file buffer into the file handle
-		_, err = io.Copy(f, file)
-		if err != nil {
-			http.Error(w, "An error occurred applying the upload to the filesystem", http.StatusInternalServerError)
+	// check if the uploaded file already exists
+	// if the repository is configured in protected mode
+	// the request will return status 403 (forbidden)
+	if viper.GetBool("yum.protected") {
+		if _, err := os.Stat(repoPath + "/" + handler.Filename); err == nil {
+			http.Error(w, "File already exists, forbidden to overwrite!\n",
+				http.StatusForbidden)
 			log.Println(err)
 			return
 		}
+		log.Println("File already exists, will overwrite: " + handler.Filename)
+	}
 
-		// process the uploaded file
-		mutex.Lock()
-		cmdOut, err = exec.Command(createrepoBinary, "--update", "--workers", workers, repoPath).CombinedOutput()
-		if err != nil {
-			fmt.Fprintln(w, string(cmdOut))
-			http.Error(w, "Could not update repository", http.StatusInternalServerError)
-			log.Println(cmdOut, err)
-			mutex.Unlock()
-			return
-		}
-		log.Println(string(cmdOut))
+	// create file handler to write uploaded file to
+	f, err := os.OpenFile(repoPath+"/"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		http.Error(w, "An error occurred", http.StatusInternalServerError)
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	// copy the file buffer into the file handle
+	_, err = io.Copy(f, file)
+	if err != nil {
+		http.Error(w, "An error occurred applying the upload to the filesystem", http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+
+	// process the uploaded file
+	mutex.Lock()
+	cmdOut, err = exec.Command(createrepoBinary, "--update", "--workers", workers, repoPath).CombinedOutput()
+	if err != nil {
+		fmt.Fprintln(w, string(cmdOut))
+		http.Error(w, "Could not update repository", http.StatusInternalServerError)
+		log.Println(cmdOut, err)
 		mutex.Unlock()
-
+		return
 	}
-
-	// assume curl --upload-file style of upload type
-	// this is currently not supported
-	if r.Method == "PUT" {
-		http.Error(w, "Method not allowed, POST binary to URI\n", http.StatusMethodNotAllowed)
-	}
+	log.Println(string(cmdOut))
+	mutex.Unlock()
 }
 
 func init() {
