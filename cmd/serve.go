@@ -71,6 +71,7 @@ func helpHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// ingest the configured helpFile
 	help, err := ioutil.ReadFile(helpFile)
 	if err != nil {
+		log.Println("Help file could not be read!")
 		http.Error(w, "Could not load the help file", http.StatusInternalServerError)
 		return
 	}
@@ -78,11 +79,13 @@ func helpHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// render the Markdown file to HTML using the
 	// blackfriday library
 	output := blackfriday.Run(help)
+	log.Println("/help requested!")
 	fmt.Fprintf(w, string(output))
 }
 
 func apiPostUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
+	errText := ""
 	repoPath := viper.GetString("yum.repopath")
 	workers := viper.GetString("yum.workers")
 	createrepoBinary := viper.GetString("yum.createrepoBinary")
@@ -95,13 +98,17 @@ func apiPostUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.P
 
 	file, handler, err := r.FormFile("fileupload")
 	if err != nil {
-		http.Error(w, "FormFile does not match - use fileupload\n", http.StatusBadRequest)
+		errText = fmt.Sprintf("%s - incorrect FormFile used, must be fileupload!\n", r.URL)
+		log.Println(errText)
+		http.Error(w, errText, http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
 
 	if filepath.Ext(handler.Filename) != ".rpm" {
-		http.Error(w, "File not RPM\n", http.StatusUnsupportedMediaType)
+		errText = fmt.Sprintf("%s - %s uploaded, not an rpm package!\n", r.URL, handler.Filename)
+		log.Printf(errText)
+		http.Error(w, errText, http.StatusUnsupportedMediaType)
 		return
 	}
 
@@ -110,9 +117,10 @@ func apiPostUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.P
 	// the request will return status 403 (forbidden)
 	if viper.GetBool("yum.protected") {
 		if _, err := os.Stat(repoPath + "/" + handler.Filename); err == nil {
-			http.Error(w, "File already exists, forbidden to overwrite!\n",
-				http.StatusForbidden)
+			errText = fmt.Sprintf("%s - File already exists, forbidden to overwrite!\n", r.URL)
+			log.Println(errText)
 			log.Println(err)
+			http.Error(w, errText, http.StatusForbidden)
 			return
 		}
 		log.Println("File already exists, will overwrite: " + handler.Filename)
@@ -121,7 +129,9 @@ func apiPostUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.P
 	// create file handler to write uploaded file to
 	f, err := os.OpenFile(repoPath+"/"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
-		http.Error(w, "An error occurred", http.StatusInternalServerError)
+		errText = fmt.Sprintf("%s - %s/%s could not be created!\n", r.URL, repoPath, handler.Filename)
+		log.Println(errText)
+		http.Error(w, errText, http.StatusInternalServerError)
 		log.Fatal(err)
 	}
 	defer f.Close()
@@ -129,8 +139,11 @@ func apiPostUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.P
 	// copy the file buffer into the file handle
 	_, err = io.Copy(f, file)
 	if err != nil {
-		http.Error(w, "An error occurred applying the upload to the filesystem", http.StatusInternalServerError)
+		errText = fmt.Sprintf("%s - an error occured copying the uploaded file to servers filesystem!\n",
+			r.URL)
+		log.Println(errText)
 		log.Println(err)
+		http.Error(w, errText, http.StatusInternalServerError)
 		return
 	}
 
@@ -140,7 +153,7 @@ func apiPostUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.P
 	if err != nil {
 		fmt.Fprintln(w, string(cmdOut))
 		http.Error(w, "Could not update repository", http.StatusInternalServerError)
-		log.Println(cmdOut, err)
+		log.Println(err, string(cmdOut))
 		mutex.Unlock()
 		return
 	}
