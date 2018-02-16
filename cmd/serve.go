@@ -51,10 +51,10 @@ var serveCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		repoPath := viper.GetString("yum.repopath")
-		router:= httprouter.New()
 
-		http.Handle("/", http.FileServer(http.Dir(repoPath)))
-//		router.GET("/", http.StripPrefix("/", http.FileServer(http.Dir(repoPath))))
+		router:= httprouter.New()
+		router.Handler("GET", "/", http.FileServer(http.Dir(repoPath)))
+
 		router.GET("/help", helpHandler)
 		router.POST("/api/upload", apiUploadHandler)
 		//router.PUT("/api/upload/:filename", apiUploadPut)
