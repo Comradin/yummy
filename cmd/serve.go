@@ -57,7 +57,7 @@ var serveCmd = &cobra.Command{
 		router.GET("/help", helpHandler)
 		router.POST("/api/upload", apiPostUploadHandler)
 		//router.PUT("/api/upload/:filename", apiUploadPut)
-		//router.DELETE("/api/delete/:name", apiDeleteHandler)
+		router.DELETE("/api/delete/:filename", apiDeleteHandler)
 
 		log.Fatal(http.ListenAndServe(":8080", router))
 	},
@@ -80,6 +80,30 @@ func helpHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	output := blackfriday.Run(help)
 	log.Println("/help requested!")
 	fmt.Fprintf(w, string(output))
+}
+
+func apiDeleteHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	fileName := ps.ByName("filename")
+	repoPath := viper.GetString("yum.repopath")
+
+	if _, err := os.Stat(repoPath + "/" + fileName); err == nil {
+		// requested file exists
+		if err := os.Remove(repoPath + "/" + fileName); err != nil {
+			errText := fmt.Sprintf("%s - Could not delete file!\n", r.URL)
+			log.Printf(errText)
+			http.Error(w, errText, http.StatusInternalServerError)
+			return
+		} else {
+			// file deleted
+			logText := fmt.Sprintf("%s - File deleted!\n", r.URL.Path)
+			log.Printf(logText)
+		}
+	} else {
+		// file does not exists
+		errText := fmt.Sprintf("%s - File not found!\n", r.URL.Path)
+		log.Println(errText)
+		http.Error(w, errText, http.StatusNotFound)
+	}
 }
 
 func apiPostUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
