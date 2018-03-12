@@ -61,3 +61,7 @@ The options should be mostly self explanatory. Here a brief overview:
 3. createrepoBinary, path to the executable to create the repository metadata
 4. rpmBinary, not in use yet, for further verification of uploaded rpm files
 5. helpFile, path to load the help file from
+
+# hints for contributors
+This project uses the Go dependency management tool `dep`.
+If you added a new dependency, please add with `dep ensure -add`
