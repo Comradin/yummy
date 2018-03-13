@@ -71,6 +71,24 @@ func sendFileHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	}
 }
 
+func updateRepo(w http.ResponseWriter) {
+	mutex.Lock()
+	workers := viper.GetString("yum.workers")
+	repoPath := viper.GetString("yum.repopath")
+	createrepoBinary := viper.GetString("yum.createrepoBinary")
+	cmdOut, err := exec.Command(createrepoBinary, "--update", "--workers", workers, repoPath).CombinedOutput()
+	if err != nil {
+		fmt.Fprintln(w, string(cmdOut))
+		http.Error(w, "Could not update repository", http.StatusInternalServerError)
+		log.Println(err, string(cmdOut))
+		mutex.Unlock()
+		return
+	}
+	log.Println(string(cmdOut))
+	mutex.Unlock()
+	return true
+}
+
 func helpHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// get helpFile path from configuration
 	helpFile := viper.GetString("yum.helpFile")
@@ -105,6 +123,8 @@ func apiDeleteHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 			// file deleted
 			logText := fmt.Sprintf("%s - File deleted!\n", r.URL.Path)
 			log.Printf(logText)
+			// update repository
+			updateRepo(w)
 		}
 	} else {
 		// file does not exists
@@ -118,8 +138,6 @@ func apiPostUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.P
 
 	errText := ""
 	repoPath := viper.GetString("yum.repopath")
-	workers := viper.GetString("yum.workers")
-	createrepoBinary := viper.GetString("yum.createrepoBinary")
 
 	file, handler, err := r.FormFile("fileupload")
 	if err != nil {
@@ -169,19 +187,8 @@ func apiPostUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.P
 		http.Error(w, errText, http.StatusInternalServerError)
 		return
 	}
-
-	// process the uploaded file
-	mutex.Lock()
-	cmdOut, err = exec.Command(createrepoBinary, "--update", "--workers", workers, repoPath).CombinedOutput()
-	if err != nil {
-		fmt.Fprintln(w, string(cmdOut))
-		http.Error(w, "Could not update repository", http.StatusInternalServerError)
-		log.Println(err, string(cmdOut))
-		mutex.Unlock()
-		return
-	}
-	log.Println(string(cmdOut))
-	mutex.Unlock()
+	// update repository
+	updateRepo(w)
 }
 
 func init() {
