@@ -23,6 +23,15 @@ _-F fileupload=@file.rpm_
 service at the moment. Using a different form value or an http PUT will
 result in an error.
 
+## /api/delete
+The delete endpoint deletes a given rpm.
+The file is declared by adding it to the url:
+
+```example
+    curl -X DELETE http://localhost:8080/api/delete/python-elasticsearch-curator-5.1.1-1.noarch.rpm \
+         http://yum.example.com/api/upload
+```
+
 The file must be of type "*.rpm" or the upload will fail.
 
 ## / BaseURL
