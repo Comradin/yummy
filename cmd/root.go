@@ -22,7 +22,9 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -159,5 +161,19 @@ func initConfig() {
 	if err != nil {
 		fmt.Printf("configured help file '%s' does not exists\n", helpFile)
 		os.Exit(1)
+	}
+
+	// initialise repository if not exists
+	_, err = os.Stat(repoPath + "/repodata")
+	if err != nil {
+		fmt.Printf("initialise empty repository in %s\n", repoPath)
+		var cmdOut []byte
+		cmdOut, err = exec.Command(createrepoBinary, repoPath).CombinedOutput()
+		if err != nil {
+			log.Println(err, string(cmdOut))
+			os.Exit(1)
+		}
+	} else {
+		fmt.Printf("Using existing repository: %s\n", repoPath)
 	}
 }
