@@ -21,6 +21,7 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -29,6 +30,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/julienschmidt/httprouter"
@@ -106,9 +108,33 @@ func helpHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Fprintf(w, string(output))
 }
 
+func checkAuthentication(r *http.Request) bool {
+	// check if header is set
+	authString := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
+	if len(authString) != 2 {
+		return false
+	}
+	// decode auth data
+	authBytes, err := base64.StdEncoding.DecodeString(authString[1])
+	if err != nil {
+		return false
+	}
+	// check user and password
+	if string(authBytes) == viper.GetString("yum.user")+":"+viper.GetString("yum.password") {
+		return true
+	} else {
+		return false
+	}
+}
+
 func apiDeleteHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	fileName := ps.ByName("filename")
 	repoPath := viper.GetString("yum.repopath")
+
+	if !checkAuthentication(r) {
+		http.Error(w, "not authorized", http.StatusUnauthorized)
+		return
+	}
 
 	if _, err := os.Stat(repoPath + "/" + fileName); err == nil {
 		// requested file exists
