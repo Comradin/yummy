@@ -59,6 +59,8 @@ yum:
   createrepoBinary: /bin/createrepo
   rpmBinary: /bin/rpm
   helpFile: /usr/share/doc/yummy/README.md
+  user: yummy
+  password: yummy
 ```
 
 The options should be mostly self explanatory. Here a brief overview:
@@ -70,6 +72,8 @@ The options should be mostly self explanatory. Here a brief overview:
 3. createrepoBinary, path to the executable to create the repository metadata
 4. rpmBinary, not in use yet, for further verification of uploaded rpm files
 5. helpFile, path to load the help file from
+6. user, the user for authentificate for the delete endpoint
+7. password, the password for authentificate for the delete endpoint
 
 # hints for contributors
 This project uses the Go dependency management tool `dep`
