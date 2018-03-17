@@ -72,8 +72,9 @@ The options should be mostly self explanatory. Here a brief overview:
 3. createrepoBinary, path to the executable to create the repository metadata
 4. rpmBinary, not in use yet, for further verification of uploaded rpm files
 5. helpFile, path to load the help file from
-6. user, the user for authentificate for the delete endpoint
-7. password, the password for authentificate for the delete endpoint
+6. auth enabled, enable/disable authentication
+7. auth user, the user for authentificate for the delete endpoint
+8. auth password, the password for authentificate for the delete endpoint
 
 # hints for contributors
 This project uses the Go dependency management tool `dep`

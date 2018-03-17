@@ -109,6 +109,10 @@ func helpHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func checkAuthentication(r *http.Request) bool {
+	// check if authentication is enabled
+	if !viper.GetBool("yum.auth.enabled") {
+		return true
+	}
 	// check if header is set
 	authString := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
 	if len(authString) != 2 {
@@ -120,7 +124,7 @@ func checkAuthentication(r *http.Request) bool {
 		return false
 	}
 	// check user and password
-	if string(authBytes) == viper.GetString("yum.user")+":"+viper.GetString("yum.password") {
+	if string(authBytes) == viper.GetString("yum.auth.user")+":"+viper.GetString("yum.auth.password") {
 		return true
 	} else {
 		return false
