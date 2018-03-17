@@ -53,14 +53,22 @@ var serveCmd = &cobra.Command{
 
 		router := httprouter.New()
 		router.Handler("GET", "/", http.FileServer(http.Dir(repoPath)))
-
-		router.GET("/help", helpHandler)
+		router.GET("/:filename", sendFileHandler)
 		router.POST("/api/upload", apiPostUploadHandler)
 		//router.PUT("/api/upload/:filename", apiUploadPut)
 		router.DELETE("/api/delete/:filename", apiDeleteHandler)
 
 		log.Fatal(http.ListenAndServe(":8080", router))
 	},
+}
+
+func sendFileHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// if /help is called, we need to redirect this to helpHandler
+	if r.URL.Path == "/help" {
+		helpHandler(w, r, ps)
+	} else {
+		http.ServeFile(w, r, viper.GetString("yum.repopath")+"/"+ps.ByName("filename"))
+	}
 }
 
 func helpHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
