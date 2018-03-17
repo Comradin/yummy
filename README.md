@@ -59,8 +59,10 @@ yum:
   createrepoBinary: /bin/createrepo
   rpmBinary: /bin/rpm
   helpFile: /usr/share/doc/yummy/README.md
-  user: yummy
-  password: yummy
+  auth:
+    enabled: false
+    user: yummy
+    password: yummy
 ```
 
 The options should be mostly self explanatory. Here a brief overview:
