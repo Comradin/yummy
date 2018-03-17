@@ -71,18 +71,16 @@ func sendFileHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	}
 }
 
-func updateRepo(w http.ResponseWriter) {
+func updateRepo() bool {
 	mutex.Lock()
 	workers := viper.GetString("yum.workers")
 	repoPath := viper.GetString("yum.repopath")
 	createrepoBinary := viper.GetString("yum.createrepoBinary")
 	cmdOut, err := exec.Command(createrepoBinary, "--update", "--workers", workers, repoPath).CombinedOutput()
 	if err != nil {
-		fmt.Fprintln(w, string(cmdOut))
-		http.Error(w, "Could not update repository", http.StatusInternalServerError)
 		log.Println(err, string(cmdOut))
 		mutex.Unlock()
-		return
+		return false
 	}
 	log.Println(string(cmdOut))
 	mutex.Unlock()
@@ -124,7 +122,9 @@ func apiDeleteHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 			logText := fmt.Sprintf("%s - File deleted!\n", r.URL.Path)
 			log.Printf(logText)
 			// update repository
-			updateRepo(w)
+			if !updateRepo() {
+				http.Error(w, "Could not update repository", http.StatusInternalServerError)
+			}
 		}
 	} else {
 		// file does not exists
@@ -188,7 +188,9 @@ func apiPostUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.P
 		return
 	}
 	// update repository
-	updateRepo(w)
+	if !updateRepo() {
+		http.Error(w, "Could not update repository", http.StatusInternalServerError)
+	}
 }
 
 func init() {
