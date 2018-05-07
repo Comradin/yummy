@@ -71,10 +71,15 @@ func sendFileHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		helpHandler(w, r, ps)
 	} else if r.URL.Path == "/repodata" {
 		http.StripPrefix("/repodata", http.FileServer(http.Dir(repoPath+ps.ByName("tier1")))).ServeHTTP(w, r)
-	} else if ps.ByName("tier2") != "" {
-		http.ServeFile(w, r, repoPath+"/"+ps.ByName("tier1")+ps.ByName("tier2"))
 	} else {
-		http.ServeFile(w, r, repoPath+"/"+ps.ByName("tier1"))
+		if _, err := os.Stat(repoPath+"/"+ps.ByName("tier1")); err == nil {
+			http.ServeFile(w, r, repoPath+"/"+ps.ByName("tier1"))
+		} else if _, err := os.Stat(repoPath+"/repodata/"+ps.ByName("tier1")); err == nil {
+			http.ServeFile(w, r, repoPath+"/repodata/"+ps.ByName("tier1"))
+		} else {
+			http.Error(w, "404 page not found!", http.StatusNotFound)
+		}
+
 	}
 }
 
