@@ -55,8 +55,7 @@ var serveCmd = &cobra.Command{
 
 		router := httprouter.New()
 		router.Handler("GET", "/", http.FileServer(http.Dir(repoPath)))
-		router.GET("/:tier1", sendFileHandler)
-		router.GET("/:tier1/:tier2", sendFileHandler)
+		router.GET("/:filename", sendFileHandler)
 		router.POST("/api/upload", apiPostUploadHandler)
 		//router.PUT("/api/upload/:filename", apiUploadPut)
 		router.DELETE("/api/delete/:filename", apiDeleteHandler)
@@ -67,19 +66,19 @@ var serveCmd = &cobra.Command{
 
 func sendFileHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	repoPath := viper.GetString("yum.repopath")
+	filename := ps.ByName("filename")
 	if r.URL.Path == "/help" {
 		helpHandler(w, r, ps)
 	} else if r.URL.Path == "/repodata" {
-		http.StripPrefix("/repodata", http.FileServer(http.Dir(repoPath+ps.ByName("tier1")))).ServeHTTP(w, r)
+		http.StripPrefix("/repodata", http.FileServer(http.Dir(repoPath+filename))).ServeHTTP(w, r)
 	} else {
-		if _, err := os.Stat(repoPath+"/"+ps.ByName("tier1")); err == nil {
-			http.ServeFile(w, r, repoPath+"/"+ps.ByName("tier1"))
-		} else if _, err := os.Stat(repoPath+"/repodata/"+ps.ByName("tier1")); err == nil {
-			http.ServeFile(w, r, repoPath+"/repodata/"+ps.ByName("tier1"))
+		if _, err := os.Stat(repoPath+"/"+filename); err == nil {
+			http.ServeFile(w, r, repoPath+"/"+filename)
+		} else if _, err := os.Stat(repoPath+"/repodata/"+filename); err == nil {
+			http.ServeFile(w, r, repoPath+"/repodata/"+filename)
 		} else {
 			http.Error(w, "404 page not found!", http.StatusNotFound)
 		}
-
 	}
 }
 
