@@ -55,7 +55,8 @@ var serveCmd = &cobra.Command{
 
 		router := httprouter.New()
 		router.Handler("GET", "/", http.FileServer(http.Dir(repoPath)))
-		router.GET("/:filename", sendFileHandler)
+		router.GET("/:tier1", sendFileHandler)
+		router.GET("/:tier1/:tier2", sendFileHandler)
 		router.POST("/api/upload", apiPostUploadHandler)
 		//router.PUT("/api/upload/:filename", apiUploadPut)
 		router.DELETE("/api/delete/:filename", apiDeleteHandler)
@@ -65,11 +66,15 @@ var serveCmd = &cobra.Command{
 }
 
 func sendFileHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	// if /help is called, we need to redirect this to helpHandler
+	repoPath := viper.GetString("yum.repopath")
 	if r.URL.Path == "/help" {
 		helpHandler(w, r, ps)
+	} else if r.URL.Path == "/repodata" {
+		http.StripPrefix("/repodata", http.FileServer(http.Dir(repoPath+ps.ByName("tier1")))).ServeHTTP(w, r)
+	} else if ps.ByName("tier2") != "" {
+		http.ServeFile(w, r, repoPath+"/"+ps.ByName("tier1")+ps.ByName("tier2"))
 	} else {
-		http.ServeFile(w, r, viper.GetString("yum.repopath")+"/"+ps.ByName("filename"))
+		http.ServeFile(w, r, repoPath+"/"+ps.ByName("tier1"))
 	}
 }
 
