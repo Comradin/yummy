@@ -55,6 +55,7 @@ var serveCmd = &cobra.Command{
 
 		router := httprouter.New()
 		router.NotFound = http.FileServer(http.Dir(repoPath))
+		router.GET("/help", helpHandler)
 		router.POST("/api/upload", apiPostUploadHandler)
 		//router.PUT("/api/upload/:filename", apiUploadPut)
 		router.DELETE("/api/delete/:filename", apiDeleteHandler)
