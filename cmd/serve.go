@@ -60,7 +60,7 @@ var serveCmd = &cobra.Command{
 		//router.PUT("/api/upload/:filename", apiUploadPut)
 		router.DELETE("/api/delete/:filename", apiDeleteHandler)
 
-		log.Fatal(http.ListenAndServe(":8080", router))
+		log.Fatal(http.ListenAndServe(":"+port, router))
 	},
 }
 
