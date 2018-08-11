@@ -54,32 +54,13 @@ var serveCmd = &cobra.Command{
 		repoPath := viper.GetString("yum.repopath")
 
 		router := httprouter.New()
-		router.Handler("GET", "/", http.FileServer(http.Dir(repoPath)))
-		router.GET("/:filename", sendFileHandler)
+		router.NotFound = http.FileServer(http.Dir(repoPath))
 		router.POST("/api/upload", apiPostUploadHandler)
 		//router.PUT("/api/upload/:filename", apiUploadPut)
 		router.DELETE("/api/delete/:filename", apiDeleteHandler)
 
 		log.Fatal(http.ListenAndServe(":"+port, router))
 	},
-}
-
-func sendFileHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	repoPath := viper.GetString("yum.repopath")
-	filename := ps.ByName("filename")
-	if r.URL.Path == "/help" {
-		helpHandler(w, r, ps)
-	} else if r.URL.Path == "/repodata" {
-		http.StripPrefix("/repodata", http.FileServer(http.Dir(repoPath+filename))).ServeHTTP(w, r)
-	} else {
-		if _, err := os.Stat(repoPath + "/" + filename); err == nil {
-			http.ServeFile(w, r, repoPath+"/"+filename)
-		} else if _, err := os.Stat(repoPath + "/repodata/" + filename); err == nil {
-			http.ServeFile(w, r, repoPath+"/repodata/"+filename)
-		} else {
-			http.Error(w, "404 page not found!", http.StatusNotFound)
-		}
-	}
 }
 
 func updateRepo() bool {
