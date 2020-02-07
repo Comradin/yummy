@@ -25,3 +25,6 @@ vendor/
 
 # Ignore testfiles
 test/
+
+# Ignore VSCode project settings
+.vscode
