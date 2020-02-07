@@ -117,9 +117,8 @@ func checkAuthentication(r *http.Request) bool {
 	// check user and password
 	if string(authBytes) == viper.GetString("yum.auth.user")+":"+viper.GetString("yum.auth.password") {
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 
 func apiDeleteHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -138,14 +137,13 @@ func apiDeleteHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 			log.Printf(errText)
 			http.Error(w, errText, http.StatusInternalServerError)
 			return
-		} else {
-			// file deleted
-			logText := fmt.Sprintf("%s - File deleted!\n", r.URL.Path)
-			log.Printf(logText)
-			// update repository
-			if !updateRepo() {
-				http.Error(w, "Could not update repository", http.StatusInternalServerError)
-			}
+		}
+		// file deleted
+		logText := fmt.Sprintf("%s - File deleted!\n", r.URL.Path)
+		log.Printf(logText)
+		// update repository
+		if !updateRepo() {
+			http.Error(w, "Could not update repository", http.StatusInternalServerError)
 		}
 	} else {
 		// file does not exists
