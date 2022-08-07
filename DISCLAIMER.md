@@ -16,3 +16,7 @@ to implement this and so the other cli commands fell down.
 
 Because of this, I decided to keep yummy as a pure webserver and remove the cobra
 library to clean up the code.
+
+As of the day when yummy was under active development, dep was a viable option for
+dependency management. But today Go modules are the way to go. So it is time to
+switch to this instead.
