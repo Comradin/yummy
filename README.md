@@ -28,11 +28,8 @@ The delete endpoint deletes a given rpm.
 The file is declared by adding it to the url:
 
 ```example
-    curl -X DELETE http://localhost:8080/api/delete/python-elasticsearch-curator-5.1.1-1.noarch.rpm \
-         http://yum.example.com/api/upload
+    curl -X DELETE http://localhost:8080/api/delete/python-elasticsearch-curator-5.1.1-1.noarch.rpm
 ```
-
-The file must be of type "*.rpm" or the upload will fail.
 
 ## / BaseURL
 Will serve the repository content as a Filebrowser, so it can be used as
