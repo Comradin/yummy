@@ -34,9 +34,9 @@ import (
 	"sync"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/russross/blackfriday/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/russross/blackfriday.v2"
 )
 
 var (
