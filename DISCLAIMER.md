@@ -10,12 +10,13 @@ of polishing and work.
 
 # The Roadmap
 
-First, I had the plan to make yummy not only the webserver but also a CLI tool
-for housekeeping tasks and to be able to upload rpms. But, I didn't have the time
-to implement this and so the other cli commands fell down. 
+First, I had the plan to make yummy not only the repository serving webserver but also a
+CLI tool for housekeeping tasks and to may be able to upload rpm packages. Feature creep?
+But, as time told, I haven't had the time to implement this.
 
-Because of this, I decided to keep yummy as a pure webserver and remove the cobra
-library to clean up the code.
+Because of this, I decided to keep yummy as a pure webserver with the simple purpose of
+serving rpm packages with the ability to upload and delete `stale` packages. With this
+step the cobra library and code can be removed.
 
 As of the day when yummy was under active development, dep was a viable option for
 dependency management. But today Go modules are the way to go. So it is time to
