@@ -18,6 +18,8 @@
 
 # Project binary
 yummy
+!server/*.go
+cmd/server/server
 
 # Vendoring with dep
 # Ignore the vendored packages

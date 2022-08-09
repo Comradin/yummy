@@ -1,4 +1,4 @@
-// Copyright © 2017 Marcus Franke <marcus.franke@gmail.com>
+// Copyright © 2022 Marcus Franke <marcus.franke@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package cmd
+package main
 
 import (
 	"encoding/base64"
@@ -35,7 +35,6 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/russross/blackfriday/v2"
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -45,23 +44,19 @@ var (
 	mutex  sync.Mutex
 )
 
-// serveCmd represents the serve command
-var serveCmd = &cobra.Command{
-	Use:   "serve",
-	Short: "Starts the yummy webserver",
-	Run: func(cmd *cobra.Command, args []string) {
+// Main function for the repository webserver
+func main() {
 
-		repoPath := viper.GetString("yum.repopath")
+	// parse config file
+	initConfig()
 
-		router := httprouter.New()
-		router.NotFound = http.FileServer(http.Dir(repoPath))
-		router.GET("/help", helpHandler)
-		router.POST("/api/upload", apiPostUploadHandler)
-		//router.PUT("/api/upload/:filename", apiUploadPut)
-		router.DELETE("/api/delete/:filename", apiDeleteHandler)
-
-		log.Fatal(http.ListenAndServe(":"+port, router))
-	},
+	repoPath := viper.GetString("yum.repopath")
+	router := httprouter.New()
+	router.NotFound = http.FileServer(http.Dir(repoPath))
+	router.GET("/help", helpHandler)
+	router.POST("/api/upload", apiPostUploadHandler)
+	router.DELETE("/api/delete/:filename", apiDeleteHandler)
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }
 
 func updateRepo() bool {
@@ -212,11 +207,4 @@ func apiPostUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.P
 	if !updateRepo() {
 		http.Error(w, "Could not update repository", http.StatusInternalServerError)
 	}
-}
-
-func init() {
-	RootCmd.AddCommand(serveCmd)
-
-	// Flags for the serve command.
-	serveCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port to listen on")
 }
