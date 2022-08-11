@@ -77,7 +77,7 @@ func initConfig() yummyConfiguration {
 
 	// store configurations in a variables, as we use them quite often
 	return yummyConfiguration{
-		repopath:         viper.GetString("yum.repopath"),
+		repoPath:         viper.GetString("yum.repoPath"),
 		createrepoBinary: viper.GetString("yum.createrepoBinary"),
 		rpmBinary:        viper.GetString("yum.rpmBinary"),
 		helpFile:         viper.GetString("yum.helpFile"),

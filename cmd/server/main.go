@@ -39,30 +39,38 @@ import (
 )
 
 var (
-	port   string
 	cmdOut []byte
 	mutex  sync.Mutex
 )
+
+type yummyConfiguration struct {
+	port             string
+	repoPath         string
+	createrepoBinary string
+	rpmBinary        string
+	helpFile         string
+}
 
 // Main function for the repository webserver
 func main() {
 
 	// parse config file
-	initConfig()
+	config := initConfig()
+	validateConfig(config)
 
-	repoPath := viper.GetString("yum.repopath")
+	repoPath := viper.GetString("yum.repoPath")
 	router := httprouter.New()
 	router.NotFound = http.FileServer(http.Dir(repoPath))
 	router.GET("/help", helpHandler)
 	router.POST("/api/upload", apiPostUploadHandler)
 	router.DELETE("/api/delete/:filename", apiDeleteHandler)
-	log.Fatal(http.ListenAndServe(":"+port, router))
+	log.Fatal(http.ListenAndServe(":"+config.port, router))
 }
 
 func updateRepo() bool {
 	mutex.Lock()
 	workers := viper.GetString("yum.workers")
-	repoPath := viper.GetString("yum.repopath")
+	repoPath := viper.GetString("yum.repoPath")
 	createrepoBinary := viper.GetString("yum.createrepoBinary")
 	cmdOut, err := exec.Command(createrepoBinary, "--update", "--workers", workers, repoPath).CombinedOutput()
 	if err != nil {
@@ -119,7 +127,7 @@ func checkAuthentication(r *http.Request) bool {
 
 func apiDeleteHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	fileName := ps.ByName("filename")
-	repoPath := viper.GetString("yum.repopath")
+	repoPath := viper.GetString("yum.repoPath")
 
 	if !checkAuthentication(r) {
 		http.Error(w, "not authorized", http.StatusUnauthorized)
@@ -153,7 +161,7 @@ func apiDeleteHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 func apiPostUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	errText := ""
-	repoPath := viper.GetString("yum.repopath")
+	repoPath := viper.GetString("yum.repoPath")
 
 	file, handler, err := r.FormFile("fileupload")
 	if err != nil {
