@@ -6,6 +6,7 @@ yum:
   createrepoBinary: /bin/createrepo
   rpmBinary: /bin/rpm
   helpFile: /usr/share/doc/yummy/README.md
+  port: 8080
   auth:
     enabled: false
     user: yummy
