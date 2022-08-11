@@ -21,6 +21,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -32,12 +33,13 @@ import (
 
 var cfgFile string
 
+func init() {
+	flag.StringVar(&cfgFile, "config", "$HOME/.yummy.yaml", "config file (default is $HOME/.yummy.yaml)")
+	flag.Parse()
+}
+
 // initConfig parses the config file and ENV variables, if set.
-func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	}
+func initConfig() yummyConfiguration {
 
 	// Find home directory.
 	home, err := homedir.Dir()
@@ -62,82 +64,23 @@ func initConfig() {
 
 	viper.AutomaticEnv() // read in environment variables that match
 
+	if cfgFile != "$HOME/.yummy.yaml" {
+		// Use config file from the flag.
+		fmt.Println("Checking config file:", cfgFile)
+		viper.SetConfigFile(cfgFile)
+	}
+
 	// If config file is found, parse it.
-	if err := viper.ReadInConfig(); err == nil {
+	if err = viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
 
-	// validate configuration
-
 	// store configurations in a variables, as we use them quite often
-	repoPath := viper.GetString("yum.repopath")
-	createrepoBinary := viper.GetString("yum.createrepoBinary")
-	rpmBinary := viper.GetString("yum.rpmBinary")
-	helpFile := viper.GetString("yum.helpFile")
-
-	//// check if repo path exists
-	//info, err := os.Stat(repoPath)
-	//if err != nil {
-	//	fmt.Printf("configured repo path '%s' does not exists\n", repoPath)
-	//	os.Exit(1)
-	//}
-	//
-	//// check if repo path is a directory
-	//if !info.IsDir() {
-	//	fmt.Printf("configured repo path '%s' is not a directory\n", repoPath)
-	//	os.Exit(1)
-	//}
-	//
-	//// check if repo path is writeable
-	//if unix.Access(repoPath, unix.W_OK) != nil {
-	//	fmt.Printf("configured repo path '%s' is not writeable\n", repoPath)
-	//	os.Exit(1)
-	//}
-
-	// check if createrepo binary exists
-	//info, err = os.Stat(createrepoBinary)
-	//if err != nil {
-	//	fmt.Printf("configured createrepo binary '%s' does not exists\n", createrepoBinary)
-	//	os.Exit(1)
-	//}
-	//
-	//// check if createrepo binary is executable
-	//if unix.Access(createrepoBinary, unix.X_OK) != nil {
-	//	fmt.Printf("configured createrepo binary '%s' is not executable\n", createrepoBinary)
-	//	os.Exit(1)
-	//}
-	//
-	//// check if rpm binary exists
-	//info, err = os.Stat(rpmBinary)
-	//if err != nil {
-	//	fmt.Printf("configured rpm binary '%s' does not exists\n", rpmBinary)
-	//	os.Exit(1)
-	//}
-
-	// check if rpm binary is executable
-	//if unix.Access(rpmBinary, unix.X_OK) != nil {
-	//	fmt.Printf("configured rpm binary '%s' is not executable\n", rpmBinary)
-	//	os.Exit(1)
-	//}
-	//
-	//// check if help file exists
-	//info, err = os.Stat(helpFile)
-	//if err != nil {
-	//	fmt.Printf("configured help file '%s' does not exists\n", helpFile)
-	//	os.Exit(1)
-	//}
-	//
-	//// initialise repository if not exists
-	//_, err = os.Stat(repoPath + "/repodata")
-	//if err != nil {
-	//	fmt.Printf("initialise empty repository in %s\n", repoPath)
-	//	var cmdOut []byte
-	//	cmdOut, err = exec.Command(createrepoBinary, repoPath).CombinedOutput()
-	//	if err != nil {
-	//		log.Println(err, string(cmdOut))
-	//		os.Exit(1)
-	//	}
-	//} else {
-	//	fmt.Printf("Using existing repository: %s\n", repoPath)
-	//}
+	return yummyConfiguration{
+		repopath:         viper.GetString("yum.repopath"),
+		createrepoBinary: viper.GetString("yum.createrepoBinary"),
+		rpmBinary:        viper.GetString("yum.rpmBinary"),
+		helpFile:         viper.GetString("yum.helpFile"),
+		port:             viper.GetString("yum.port"),
+	}
 }
