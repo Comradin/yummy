@@ -34,7 +34,6 @@ import (
 	"sync"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/russross/blackfriday/v2"
 	"github.com/spf13/viper"
 )
 
@@ -204,7 +203,7 @@ func apiPostUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.P
 	// copy the file buffer into the file handle
 	_, err = io.Copy(f, file)
 	if err != nil {
-		errText = fmt.Sprintf("%s - an error occured copying the uploaded file to servers filesystem!\n",
+		errText = fmt.Sprintf("%s - an error occurred copying the uploaded file to servers filesystem!\n",
 			r.URL)
 		log.Println(errText)
 		log.Println(err)
