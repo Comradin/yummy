@@ -3,7 +3,7 @@ module github.com/Comradin/yummy
 go 1.19
 
 require (
-	github.com/julienschmidt/httprouter v1.2.1-0.20181021223831-26a05976f9bf
+	github.com/julienschmidt/httprouter v1.3.0
 	github.com/mitchellh/go-homedir v1.0.0
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/spf13/viper v1.2.1

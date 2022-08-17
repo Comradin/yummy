@@ -34,6 +34,7 @@ import (
 	"sync"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/russross/blackfriday/v2"
 	"github.com/spf13/viper"
 )
 
@@ -60,9 +61,9 @@ func main() {
 	repoPath := viper.GetString("yum.repoPath")
 	router := httprouter.New()
 	router.NotFound = http.FileServer(http.Dir(repoPath))
-	router.GET("/help", helpHandler)
-	router.POST("/api/upload", apiPostUploadHandler)
-	router.DELETE("/api/delete/:filename", apiDeleteHandler)
+	router.HandlerFunc("GET", "/help", helpHandler)
+	router.HandlerFunc("POST", "/api/upload", apiPostUploadHandler)
+	router.HandlerFunc("DELETE", "/api/delete/:filename", apiDeleteHandler)
 	log.Fatal(http.ListenAndServe(":"+config.port, router))
 }
 
@@ -82,7 +83,7 @@ func updateRepo() bool {
 	return true
 }
 
-func helpHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func helpHandler(w http.ResponseWriter, r *http.Request) {
 	// get helpFile path from configuration
 	helpFile := viper.GetString("yum.helpFile")
 
@@ -124,8 +125,9 @@ func checkAuthentication(r *http.Request) bool {
 	}
 }
 
-func apiDeleteHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	fileName := ps.ByName("filename")
+func apiDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	filename := params.ByName("filename")
 	repoPath := viper.GetString("yum.repoPath")
 
 	if !checkAuthentication(r) {
@@ -133,9 +135,9 @@ func apiDeleteHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 		return
 	}
 
-	if _, err := os.Stat(repoPath + "/" + fileName); err == nil {
+	if _, err := os.Stat(repoPath + "/" + filename); err == nil {
 		// requested file exists
-		if err := os.Remove(repoPath + "/" + fileName); err != nil {
+		if err := os.Remove(repoPath + "/" + filename); err != nil {
 			errText := fmt.Sprintf("%s - Could not delete file!\n", r.URL)
 			log.Printf(errText)
 			http.Error(w, errText, http.StatusInternalServerError)
@@ -157,7 +159,7 @@ func apiDeleteHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 	}
 }
 
-func apiPostUploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func apiPostUploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	errText := ""
 	repoPath := viper.GetString("yum.repoPath")
