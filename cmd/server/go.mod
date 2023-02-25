@@ -7,7 +7,7 @@ require (
 	github.com/mitchellh/go-homedir v1.0.0
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/spf13/viper v1.2.1
-	golang.org/x/sys v0.0.0-20181122145206-62eef0e2fa9b
+	golang.org/x/sys v0.1.0
 )
 
 require (
